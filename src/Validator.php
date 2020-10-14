@@ -262,6 +262,9 @@ class Validator
                         throw new ValidatorException('Body too short: ' . $dkimTags['l'] . '/' . $bodyLength . '.');
                     }
                     $validationResult->addPass("Optional body length tag is present and valid: ${bodyLength}" . '.');
+                    $validationResult->addWarning(
+                        'The optional `l` body length tag is considered a security weakness and should be avoided.'
+                    );
                 }
 
                 //Ensure the optional user identifier ends in the signing domain
