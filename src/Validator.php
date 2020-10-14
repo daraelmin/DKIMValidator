@@ -196,11 +196,9 @@ class Validator
                 $dkimTags = self::extractDKIMTags($signature);
 
                 //Verify all required tags are present
-                //http://tools.ietf.org/html/rfc4871#section-6.1.1
-                $required = ['v', 'a', 'b', 'bh', 'd', 'h', 's'];
-                foreach ($required as $tagIndex) {
-                    if (! array_key_exists($tagIndex, $dkimTags)) {
-                        throw new ValidatorException("DKIM signature missing required tag: ${tagIndex}" . '.');
+                foreach (self::DKIM_REQUIRED_TAGS as $tag) {
+                    if (! array_key_exists($tag, $dkimTags)) {
+                        throw new ValidatorException("DKIM signature missing required tag: ${tag}" . '.');
                     }
                     $validationResult->addPass("Required DKIM tag present: ${tagIndex}" . '.');
                 }
