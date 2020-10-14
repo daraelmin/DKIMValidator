@@ -339,7 +339,7 @@ class Validator
                     );
                 }
 
-                //http://tools.ietf.org/html/rfc4871#section-6.1.3
+                //https://tools.ietf.org/html/rfc6376#section-6.1.3
                 //Select signed headers and canonicalize
                 $signedHeaderNames = array_unique(explode(':', $dkimTags['h']));
                 $headersToCanonicalize = [];
@@ -483,14 +483,14 @@ class Validator
         //Convert CRLF to LF breaks for convenience
         $canonicalBody = str_replace(self::CRLF, self::LF, $this->message->getBody());
         if ($algorithm === self::CANONICALIZATION_BODY_RELAXED) {
-            //http://tools.ietf.org/html/rfc4871#section-3.4.4
+            //http://tools.ietf.org/html/rfc6376#section-3.4.4
             //Remove trailing space
             $canonicalBody = preg_replace('/[ \t]+$/m', '', $canonicalBody);
             //Replace runs of whitespace with a single space
             $canonicalBody = preg_replace('/[ \t]+/m', self::SPACE, (string)$canonicalBody);
         }
         //Always perform rules for "simple" canonicalization as well
-        //http://tools.ietf.org/html/rfc4871#section-3.4.3
+        //http://tools.ietf.org/html/rfc6376#section-3.4.3
         //Remove any trailing empty lines
         $canonicalBody = preg_replace('/\n+$/', '', (string)$canonicalBody);
         //Convert line breaks back to CRLF
