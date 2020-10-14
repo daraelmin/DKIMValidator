@@ -341,7 +341,6 @@ class Validator
 
                 //https://tools.ietf.org/html/rfc6376#section-6.1.3
                 //Select signed headers and canonicalize
-                $signedHeaderNames = array_unique(explode(':', $dkimTags['h']));
                 $headersToCanonicalize = [];
                 foreach ($signedHeaderNames as $headerName) {
                     //TODO Deal with duplicate signed header values
