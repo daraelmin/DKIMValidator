@@ -104,6 +104,8 @@ final class Message
     {
         $matches = [];
         $resultCount = preg_match_all('/(^(?:[^ \t].*[\r\n]+(?:[ \t].*[\r\n]+)*))/m', $headers, $matches);
+        //Need to suppress due to a bug in psalm
+        /** @psalm-suppress DocblockTypeContradiction */
         if ($resultCount === false || $resultCount === 0 || ! isset($matches[0])) {
             return [];
         }
