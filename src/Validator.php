@@ -200,7 +200,16 @@ class Validator
                     if (! array_key_exists($tag, $dkimTags)) {
                         throw new ValidatorException("DKIM signature missing required tag: ${tag}" . '.');
                     }
-                    $validationResult->addPass("Required DKIM tag present: ${tagIndex}" . '.');
+                    $validationResult->addPass("Required DKIM tag present: ${tag}" . '.');
+                }
+
+                //Extract a list of lower-cased signed header names from the `h` tag
+                //The content of the h tag has already been cleaned up in self::extractDKIMTags()
+                $signedHeaderNames = array_map('strtolower', explode(':', $dkimTags['h']));
+                if (count($signedHeaderNames) < 1) {
+                    throw new ValidatorException(
+                        "DKIM h tag does not include any header names: ${dkimTags['h']}" . '.'
+                    );
                 }
 
                 //Validate the domain
