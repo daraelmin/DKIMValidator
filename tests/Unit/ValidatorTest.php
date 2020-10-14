@@ -10,6 +10,7 @@ use PHPMailer\DKIMValidator\Tests\TestingKeys;
 use PHPMailer\DKIMValidator\Tests\TestingResolver;
 use PHPMailer\DKIMValidator\Validator;
 use PHPMailer\DKIMValidator\ValidatorException;
+use PHPMailer\PHPMailer\PHPMailer;
 
 it(
     'canonicalizes a message correctly',
@@ -170,32 +171,6 @@ it(
         $validator = new Validator(new Message($message), new TestingResolver());
         $validation = $validator->validate();
         expect($validation->getResults()[0]->getFails()[0])->toEqual('Signing selector is invalid: .phpmailer.');
-    }
-);
-
-it(
-    'validates a message',
-    function () {
-        $messageFile = __DIR__ . '/../message.eml';
-        if (! file_exists($messageFile)) {
-            //Make a dummy assertion as we don't have an external message file to validate
-            expect(true)->toBeTrue();
-
-            return;
-        }
-        $message = file_get_contents($messageFile);
-        if ($message !== false) {
-            expect($message)->not->toBeFalse();
-            $validator = new Validator(new Message($message));
-            $validation = $validator->validate();
-            expect($validation->isValid())->toBeFalse();
-            $validationBool = $validator->validateBoolean();
-            expect($validationBool)->toBeFalse();
-            expect($validation->getResults()[0]->getPasses())->not->toBeEmpty();
-            expect($validation->getResults()[0]->getFails())->not->toBeEmpty();
-        } else {
-            expect($message)->toBeFalse();
-        }
     }
 );
 
@@ -547,7 +522,6 @@ it(
         $validator = new Validator(new Message($message));
         $validation = $validator->validate();
         expect($validation->isValid())->toBeFalse();
-        expect($validation->getResults()[0]->getWarnings())->toBeEmpty();
     }
 );
 
@@ -696,6 +670,35 @@ it(
 );
 
 it(
+    'identifies a unknown hash algorithm',
+    function () {
+        //Compares the hash algorithm in the DKIM a tag in the header with an optional h tag in the DNS record
+        $message = "Date: Wed, 9 Oct 2019 18:31:45 +0000\r\n" .
+            "To: DKIM test <3yHp6B4Ge9vspC@dkimvalidator.com>\r\n" .
+            "From: Email test <test@example.com>\r\n" .
+            "Subject: DKIM sign\r\n" .
+            "Message-ID: <4JyENfIuXMRgdMymktmFxe0oqnSzslfdvbHYR4E@Mac-Pro.local>\r\n" .
+            "X-Mailer: PHPMailer 6.1.6 (https://github.com/PHPMailer/PHPMailer)\r\n" .
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: text/html; charset=iso-8859-1\r\n" .
+            "DKIM-Signature: v=1; d=example.com; i=test@example.com; s=unknownhashtype;\r\n" .
+            " a=rsa-xyz; l=6; t=1570645905; c=relaxed/simple; q=dns/txt;\r\n" .
+            " h=Date:To:From:Subject:Message-ID:X-Mailer:Content-Type;\r\n" .
+            " bh=g3zLYH4xKxcPrHOD18z9YfpQcnk/GaJedfustWU5uGs=;\r\n" .
+            " b=ljWj1co9L6sMrXJ1yBwJ771dnjvVKZN3i97Q/QB0lGQf43FPdautceMsiu3M132QopX63Osqp\r\n" .
+            " T1Oz40T9EMONwzCpzIMKKB/tNjDe5qw+evPjf/5mAaiVpIevh1P377t/K0y0nRmCaPbfa0sbm\r\n" .
+            " eoFMSapHqTbf2phVJOCo7ejp3laovXSOhQoLZQrnCCW8LnqibtSoAO24ryr+B045XyBIcGPQk\r\n" .
+            " IWnRd043/Onv9ACRzau3F80gszR/86grpUwmZ88wHTL8R6g/pqz2eExQNNRmkFaVkwFG0vT5o\r\n" .
+            " Rh7Z0ZEl+n4fqoyrTctR8ZEimwwd+xFOtx1hB9KgjW+JVcdTVQ==\r\n\r\n" .
+            "test";
+
+        $validator = new Validator(new Message($message), new TestingResolver());
+        $validation = $validator->validate();
+        expect($validation->isValid())->toBeFalse();
+    }
+);
+
+it(
     'identifies a mismatching encryption algorithm',
     function () {
         //Compares the hash algorithm in the DKIM a tag in the header with an optional h tag in the DNS record
@@ -709,6 +712,35 @@ it(
             "Content-Type: text/html; charset=iso-8859-1\r\n" .
             "DKIM-Signature: v=1; d=example.com; i=test@example.com; s=badkeytype;\r\n" .
             " a=rsa-sha256; l=6; t=1570645905; c=relaxed/simple; q=dns/txt;\r\n" .
+            " h=Date:To:From:Subject:Message-ID:X-Mailer:Content-Type;\r\n" .
+            " bh=g3zLYH4xKxcPrHOD18z9YfpQcnk/GaJedfustWU5uGs=;\r\n" .
+            " b=ljWj1co9L6sMrXJ1yBwJ771dnjvVKZN3i97Q/QB0lGQf43FPdautceMsiu3M132QopX63Osqp\r\n" .
+            " T1Oz40T9EMONwzCpzIMKKB/tNjDe5qw+evPjf/5mAaiVpIevh1P377t/K0y0nRmCaPbfa0sbm\r\n" .
+            " eoFMSapHqTbf2phVJOCo7ejp3laovXSOhQoLZQrnCCW8LnqibtSoAO24ryr+B045XyBIcGPQk\r\n" .
+            " IWnRd043/Onv9ACRzau3F80gszR/86grpUwmZ88wHTL8R6g/pqz2eExQNNRmkFaVkwFG0vT5o\r\n" .
+            " Rh7Z0ZEl+n4fqoyrTctR8ZEimwwd+xFOtx1hB9KgjW+JVcdTVQ==\r\n\r\n" .
+            "test";
+
+        $validator = new Validator(new Message($message), new TestingResolver());
+        $validation = $validator->validate();
+        expect($validation->isValid())->toBeFalse();
+    }
+);
+
+it(
+    'identifies an unknown encryption algorithm',
+    function () {
+        //Compares the hash algorithm in the DKIM a tag in the header with an optional h tag in the DNS record
+        $message = "Date: Wed, 9 Oct 2019 18:31:45 +0000\r\n" .
+            "To: DKIM test <3yHp6B4Ge9vspC@dkimvalidator.com>\r\n" .
+            "From: Email test <test@example.com>\r\n" .
+            "Subject: DKIM sign\r\n" .
+            "Message-ID: <4JyENfIuXMRgdMymktmFxe0oqnSzslfdvbHYR4E@Mac-Pro.local>\r\n" .
+            "X-Mailer: PHPMailer 6.1.6 (https://github.com/PHPMailer/PHPMailer)\r\n" .
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: text/html; charset=iso-8859-1\r\n" .
+            "DKIM-Signature: v=1; d=example.com; i=test@example.com; s=unknownkeytype;\r\n" .
+            " a=bimble-sha256; l=6; t=1570645905; c=relaxed/simple; q=dns/txt;\r\n" .
             " h=Date:To:From:Subject:Message-ID:X-Mailer:Content-Type;\r\n" .
             " bh=g3zLYH4xKxcPrHOD18z9YfpQcnk/GaJedfustWU5uGs=;\r\n" .
             " b=ljWj1co9L6sMrXJ1yBwJ771dnjvVKZN3i97Q/QB0lGQf43FPdautceMsiu3M132QopX63Osqp\r\n" .
@@ -921,5 +953,98 @@ it(
 
         //Check that the signature matches
         expect($isValid)->toBeTrue();
+
+        //Check that an altered message doesn't match
+        $isValid = Validator::validateSignature(
+            $keys[0]['p'],
+            base64_encode($signature),
+            'jackdaws love my big sphinx of quartz'
+        );
+        expect($isValid)->toBeFalse();
+
+        //Check that an invalid hash algorithm is detected
+        $isValid = false;
+        try {
+            $isValid = Validator::validateSignature(
+                $keys[0]['p'],
+                base64_encode($signature),
+                $text,
+                'cablecat'
+            );
+        } catch (DKIMException $e) {
+            //Do nothing, we expect this
+        }
+        expect($isValid)->toBeFalse();
+
+        //Try again with a corrupt key, expect it to fail
+        $isValid = false;
+        try {
+            $isValid = Validator::validateSignature(
+                '9eHwwCgPUwak09WR06WDv0GoRv2Z+8TlU9AEQACKgCBIIMA8QACOAAFEQAB0w9Gi' .
+                'khqkgBNAjIBIIM0kMgwdJLo4WL8+ZVU5WRM7v0J/2a2921WJPiicMa42gkJKNSzg' .
+                'LWwueLimpKY+jEXjhE8rkdqLIDHF9/AnaUo2e5Szo8buJ8glBaHBxp7JGMrmF1HX' .
+                '1Ql9c+w6Up2nrNn5ljRs2CZq2e4f0+1lIPatw1d5RiiCHXbf1ZXMxHkxZfqsr67E' .
+                'OA5RupfCWk4tyjWqpxg+ZNMNbkT7bqPLfnhKod2GwTC2Q9jRhE8orbYdIlXxUzUg' .
+                'rt7CXoX9ETtPf5jZd5ytcaW++fTFSNi9RGrxlNALCkb3BPFl9ehwQaIF3vI880oD' .
+                'iQIDAxyz',
+                base64_encode($signature),
+                $text
+            );
+            expect($isValid)->toBeFalse();
+        } catch (DKIMException $e) {
+            //Do nothing, we expect this
+        }
+        expect($isValid)->toBeFalse();
     }
 );
+
+it(
+    'validates a message',
+    function () {
+        $messageFile = __DIR__ . '/../message.eml';
+        if (! file_exists($messageFile)) {
+            //Make a dummy assertion as we don't have an external message file to validate
+            expect(true)->toBeTrue();
+
+            return;
+        }
+        $message = file_get_contents($messageFile);
+        if ($message !== false) {
+            expect($message)->not->toBeFalse();
+            $validator = new Validator(new Message($message));
+            $validation = $validator->validate();
+            expect($validation->isValid())->toBeTrue();
+            $validationBool = Validator::isValid($message);
+            expect($validationBool)->toBeTrue();
+            expect($validation->getResults()[0]->getPasses())->not->toBeEmpty();
+            expect($validation->getResults()[0]->getFails())->toBeEmpty();
+        } else {
+            expect($message)->toBeFalse();
+        }
+    }
+)->skip('Not working yet');
+
+it(
+    'validates a message generated by PHPMailer',
+    function () {
+        $mail = new PHPMailer(true);
+        $mail->setFrom('from@example.com', 'Frank From');
+        $mail->addReplyTo('replyto@example.com', 'Rachel Replyto');
+        $mail->addAddress('to@example.com', 'Tanaka To');
+        $mail->Subject = 'PHPMailer DKIM test';
+        $mail->DKIM_private = __DIR__ . '/../private.key';
+        $mail->DKIM_domain = 'example.com';
+        $mail->DKIM_identity = 'from@example.com';
+        $mail->DKIM_selector = 'phpmailer';
+        $mail->DKIM_copyHeaderFields = false;
+        $mail->Body = 'This is the message body';
+        //$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+        $mail->preSend();
+        $messageRaw = $mail->getSentMIMEMessage();
+        $message = new Message($messageRaw);
+        $validator = new Validator($message, new TestingResolver());
+        $results = $validator->validate();
+        var_dump($results->getResults());
+        //        expect($results->isValid())->toBeTrue();
+    }
+)->skip('Not working yet');
