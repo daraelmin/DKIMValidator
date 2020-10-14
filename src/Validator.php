@@ -329,10 +329,6 @@ class Validator
                 if ($qType . '/' . $qFormat === 'dns/txt') {
                     try {
                         $dnsKeys = $this->fetchPublicKeys($dkimTags['d'], $dkimTags['s']);
-                    } catch (ValidatorException $e) {
-                        throw new ValidatorException(
-                            'Invalid selector: ' . $dkimTags['s'] . ' for domain: ' . $dkimTags['d'] . '.'
-                        );
                     } catch (DNSException $e) {
                         throw new ValidatorException('Public key not found in DNS, skipping signature.');
                     }
