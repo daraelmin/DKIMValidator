@@ -9,7 +9,7 @@ namespace PHPMailer\DKIMValidator;
  * and an overall valid/invalid status.
  * @package PHPMailer\DKIMValidator
  */
-class ValidationResults
+final class ValidationResults
 {
     /**
      * @var bool Whether the message has passed DKIM validation overall

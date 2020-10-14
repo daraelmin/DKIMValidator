@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPMailer\DKIMValidator;
 
-class Resolver implements ResolverInterface
+final class Resolver implements ResolverInterface
 {
     /**
      * @param string $domain

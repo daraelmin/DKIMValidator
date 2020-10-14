@@ -6,7 +6,7 @@ namespace PHPMailer\DKIMValidator;
 
 use InvalidArgumentException;
 
-class Message
+final class Message
 {
     /**
      * Carriage return, line feed; the standard RFC822 line break

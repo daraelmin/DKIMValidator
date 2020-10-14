@@ -4,7 +4,7 @@ namespace PHPMailer\DKIMValidator\Tests;
 
 use PHPMailer\DKIMValidator\ResolverInterface;
 
-class TestingResolver implements ResolverInterface
+final class TestingResolver implements ResolverInterface
 {
     /**
      * Get faked DNS records for testing purposes.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPMailer\DKIMValidator;
 
-class ValidationResult
+final class ValidationResult
 {
     /**
      * @var bool Whether this validation has passed or not

@@ -6,6 +6,6 @@ namespace PHPMailer\DKIMValidator;
 
 use Exception;
 
-class DKIMException extends Exception
+final class DKIMException extends Exception
 {
 }

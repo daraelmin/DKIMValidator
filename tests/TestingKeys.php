@@ -2,7 +2,7 @@
 
 namespace PHPMailer\DKIMValidator\Tests;
 
-class TestingKeys
+final class TestingKeys
 {
     private const PUBLIC_KEY_PATH = __DIR__ . '/public.key';
     private const PRIVATE_KEY_PATH = __DIR__ . '/private.key';
