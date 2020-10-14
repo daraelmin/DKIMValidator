@@ -277,13 +277,33 @@ class Validator
                     $validationResult->addPass('Agent or user identifier matches domain: ' . $dkimTags['i'] . '.');
                 }
 
-                //Ensure the signature includes the From field
-                if (stripos($dkimTags['h'], 'From') === false) {
-                    throw new ValidatorException(
-                        'From header not included in signed header list: ' . $dkimTags['h'] . '.'
-                    );
+                //Check that the signature signs headers that must be signed
+                foreach (self::MUST_SIGN_HEADERS as $mustSignThis) {
+                    if (!in_array($mustSignThis, $signedHeaderNames, true)) {
+                        throw new ValidatorException(
+                            'Header that must be signed is not signed: ' . $mustSignThis . '.'
+                        );
+                    }
                 }
-                $validationResult->addPass('From header is included in signed header list.');
+                $validationResult->addPass('All headers that must be signed are signed.');
+
+                //Check whether the signature signs all headers that should be signed
+                foreach (self::SHOULD_SIGN_HEADERS as $shouldSignThis) {
+                    if (!in_array($shouldSignThis, $signedHeaderNames, true)) {
+                        $validationResult->addWarning(
+                            'Header that should be signed is not signed: ' . $shouldSignThis . '.'
+                        );
+                    }
+                }
+
+                //Check whether the signature signs headers that should not be signed
+                foreach (self::SHOULD_NOT_SIGN_HEADERS as $shouldNotSignThis) {
+                    if (in_array($shouldNotSignThis, $signedHeaderNames, true)) {
+                        $validationResult->addWarning(
+                            'Header that should not be signed is signed: ' . $shouldNotSignThis . '.'
+                        );
+                    }
+                }
 
                 //Validate and check expiry time
                 if (array_key_exists('x', $dkimTags)) {
