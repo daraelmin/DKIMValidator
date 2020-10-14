@@ -146,22 +146,25 @@ class Validator
     }
 
     /**
-     * Validation wrapper - return boolean true/false about validation success/failure
+     * Simple static wrapper – return boolean true/false for validation success/failure, and don't throw any exceptions.
+     *
+     * @param string $message
      *
      * @return bool
      */
-    public function validateBoolean(): bool
+    public static function isValid(string $message): bool
     {
+        $validator = new self(new Message($message));
         //Execute original validation method
         try {
-            $analysis = $this->validate();
+            $analysis = $validator->validate();
         } catch (DKIMException $e) {
             return false;
         } catch (HeaderException $e) {
             return false;
         }
 
-        return (bool)$analysis->isValid();
+        return $analysis->isValid();
     }
 
     /**
