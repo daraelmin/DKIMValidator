@@ -35,6 +35,13 @@ class Validator
         '[a-zA-Z\d](([a-zA-Z\d-])*[a-zA-Z\d])*(\.[a-zA-Z\d](([a-zA-Z\d-])*[a-zA-Z\d])*)*';
 
     /**
+     * Tags that must be present in a DKIM-Signature header
+     *
+     * @see https://tools.ietf.org/html/rfc6376#section-6.1.1
+     */
+    public const DKIM_REQUIRED_TAGS = ['v', 'a', 'b', 'bh', 'd', 'h', 's'];
+
+    /**
      * Algorithms for header and body canonicalization are constant
      *
      * @see https://tools.ietf.org/html/rfc6376#section-3.4
