@@ -431,6 +431,10 @@ class Validator
                     }
                     $validationResult->addPass('Public key service type permits email usage.');
 
+                    //We don't need to check whether the signature algorithm is available in openssl
+                    //because we already checked that when looking at the signature, and we checked that
+                    //it's the same value in DNS
+
                     //@TODO check t= flags
 
                     //Validate the signature
