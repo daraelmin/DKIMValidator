@@ -29,20 +29,22 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": ">=7.3.0",
+    "php": "^7.3|^8.0",
     "ext-openssl": "*",
     "ext-hash": "*",
     "ext-mbstring": "*"
   },
   "require-dev": {
     "roave/security-advisories": "dev-master",
-    "vimeo/psalm": "^3.13.1",
+    "vimeo/psalm": "^3.17.1",
     "squizlabs/php_codesniffer": "^3.5.6",
     "phpcompatibility/php-compatibility": "^9.3.5",
-    "phpunit/phpunit": "^9.3.7",
-    "pestphp/pest": "^0.3.1",
-    "phpstan/phpstan": "^0.12.42",
-    "nunomaduro/phpinsights": "^1.14"
+    "phpunit/phpunit": "^9.4.1",
+    "pestphp/pest": "^0.3.9",
+    "phpstan/phpstan": "^0.12.49",
+    "nunomaduro/phpinsights": "^1.14",
+    "phpmailer/phpmailer": "^6.1.8",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
   },
   "autoload": {
     "psr-4": {
@@ -51,8 +53,8 @@
     }
   },
   "scripts": {
-    "test:unit": "./vendor/bin/pest --coverage",
-    "test:types": "./vendor/bin/phpstan analyse",
+    "test:unit": "./vendor/bin/pest --coverage --colors=always",
+    "test:types": "./vendor/bin/phpstan analyse --ansi --memory-limit=0",
     "test:psalm": "./vendor/bin/psalm --show-info=true",
     "test": [
       "@test:unit",
