@@ -716,7 +716,7 @@ class Validator
             throw new \InvalidArgumentException('Attempted to extract DKIM tags from a non-DKIM header');
         }
         $dkimTags = [];
-        //DKIM-Signature headers ignore all internal spaces, which may have been added by folding
+        //DKIM-Signature headers ignore all internal spaces, which may have been added by unfolding
         $tagParts = explode(';', $header->getValueWithoutSpaces());
         foreach ($tagParts as $tagIndex => $tagContent) {
             if (trim($tagContent) === '') {
