@@ -1,9 +1,11 @@
 # PHP DKIM Validator
 
-A straightforward validation class for checking DKIM signatures and header settings. Requires PHP 7.3 or later.
+A validation class for checking DKIM signatures and header settings. Requires PHP 7.3 or later.
 
 ![Test status](https://github.com/PHPMailer/DKIMValidator/workflows/Tests/badge.svg)
 ![Psalm coverage](https://shepherd.dev/github/vimeo/psalm/coverage.svg?)
+
+DKIM signed email is defined in [RFC6376](https://tools.ietf.org/html/rfc6376), and provides a way to authenticate both the origin of a message, and that it has not been tampered with in transit, using cryptographic signatures. 
 
 Looking to *send* DKIM-signed email? Check out [PHPMailer](https://github.com/PHPMailer/PHPMailer)!
 
@@ -16,26 +18,28 @@ composer require phpmailer/dkimvalidator
 ## Usage
 
 ```php
+use PHPMailer\DKIMValidator\Message;
 use PHPMailer\DKIMValidator\Validator;
-use PHPMailer\DKIMValidator\ValidatorException;
 require 'vendor/autoload.php';
 //Put a whole raw email message in here
 //Load the message directly from disk -
 //don't copy & paste it as that will likely affect line breaks & charsets
 $message  = file_get_contents('message.eml');
-$dkimValidator = new Validator($message);
-try {
-    if ($dkimValidator->validateBoolean()) {
-        echo "Cool, it's valid";
-    } else {
-        echo 'Uh oh, dodgy email!';
-    }
-} catch (ValidatorException $e) {
-    echo $e->getMessage();
+//Short way, provides a simple true/false response, doesn't throw exceptions
+if (Validator::isValid($message)) {
+    echo "Cool, it's valid";
+} else {
+    echo 'Uh oh, dodgy email!';
 }
+
+//Long way, provides a detailed analysis of what is right and wrong in the DKIM signature
+$validator = new Validator(new Message($message));
+$analysis = $validator->validate();
+$valid = $analysis->isValid();
+var_dump($analysis->getResults());
 ```
 
-Good article on [problems facing DKIM](https://noxxi.de/research/breaking-dkim-on-purpose-and-by-chance.html).
+DKIM has its flaws, not least that it's quite complex and a little fragile, as discussed in [this article](https://noxxi.de/research/breaking-dkim-on-purpose-and-by-chance.html). Overall, DKIM provides the best way we have of being able to ensure the authenticity and integrity of unencrypted email messages.
 
 # Changelog
 
