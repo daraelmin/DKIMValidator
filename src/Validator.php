@@ -58,6 +58,60 @@ class Validator
     public const STATUS_SUCCESS_INFO = 'INFO';
 
     /**
+     * Headers that must be included in a DKIM signature
+     */
+    public const MUST_SIGN_HEADERS = [
+        'from',
+    ];
+
+    /**
+     * Headers that should be included in a DKIM signature
+     */
+    public const SHOULD_SIGN_HEADERS = [
+        'from',
+        'sender',
+        'reply-to',
+        'subject',
+        'date',
+        'message-id',
+        'to',
+        'cc',
+        'mime-version',
+        'content-type',
+        'content-transfer-encoding',
+        'content-id',
+        'content-description',
+        'resent-date',
+        'resent-from',
+        'resent-sender',
+        'resent-to',
+        'resent-cc',
+        'resent-message-id',
+        'in-reply-to',
+        'references',
+        'list-id',
+        'list-help',
+        'list-unsubscribe',
+        'list-subscribe',
+        'list-post',
+        'list-owner',
+        'list-archive',
+    ];
+
+    /**
+     * Headers that should not be included in a DKIM signature
+     */
+    public const SHOULD_NOT_SIGN_HEADERS = [
+        'return-path',
+        'received',
+        'comments',
+        'keywords',
+        'bcc',
+        'resent-bcc',
+        'dkim-signature'
+    ];
+
+    /**
      * @var Message
      */
     protected $message;
