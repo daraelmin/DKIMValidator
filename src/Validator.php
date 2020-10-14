@@ -433,16 +433,10 @@ class Validator
 
                     //@TODO check t= flags
 
-                    // Same as the earlier check for the DKIM a tag, but for the DNS record
-                    if (! in_array($hash, openssl_get_md_methods(true), true)) {
-                        throw new ValidatorException(
-                            "Signature algorithm ${hash} is not available in openssl, key #${keyIndex}"
-                        );
-                    }
-
                     //Validate the signature
+                    /** @psalm-suppress MixedArgument */
                     $signatureResult = self::validateSignature(
-                        (string)$publicKey['p'],
+                        $publicKey['p'],
                         $dkimTags['b'],
                         $canonicalHeaders,
                         $hash
