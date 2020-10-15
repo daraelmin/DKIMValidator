@@ -289,7 +289,8 @@ class Validator
 
                 //Check whether the signature signs all headers that should be signed
                 foreach (self::SHOULD_SIGN_HEADERS as $shouldSignThis) {
-                    if (!in_array($shouldSignThis, $signedHeaderNames, true)) {
+                    $headersOfThisType = $this->message->getHeadersNamed($shouldSignThis);
+                    if (count($headersOfThisType) > 0 && !in_array($shouldSignThis, $signedHeaderNames, true)) {
                         $validationResult->addWarning(
                             'Header that should be signed is not signed: ' . $shouldSignThis . '.'
                         );
