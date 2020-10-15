@@ -30,21 +30,22 @@
   "prefer-stable": true,
   "require": {
     "php": "^7.3|^8.0",
-    "ext-openssl": "*",
     "ext-hash": "*",
-    "ext-mbstring": "*"
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-openssl": "*"
   },
   "require-dev": {
-    "roave/security-advisories": "dev-master",
-    "vimeo/psalm": "^3.17.1",
-    "squizlabs/php_codesniffer": "^3.5.6",
-    "phpcompatibility/php-compatibility": "^9.3.5",
-    "phpunit/phpunit": "^9.4.1",
-    "pestphp/pest": "^0.3.9",
-    "phpstan/phpstan": "^0.12.49",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
     "nunomaduro/phpinsights": "^1.14",
+    "pestphp/pest": "^0.3.9",
+    "phpcompatibility/php-compatibility": "^9.3.5",
     "phpmailer/phpmailer": "^6.1.8",
-    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
+    "phpstan/phpstan": "^0.12.49",
+    "phpunit/phpunit": "^9.4.1",
+    "roave/security-advisories": "dev-master",
+    "squizlabs/php_codesniffer": "^3.5.6",
+    "vimeo/psalm": "^3.17.2"
   },
   "autoload": {
     "psr-4": {
