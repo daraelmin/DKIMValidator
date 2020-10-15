@@ -98,7 +98,7 @@ final class ValidationResults
      *
      * @return string
      */
-    public function asJSON()
+    public function asJSON(): string
     {
         $out = [];
         $out['valid'] = $this->isValid();
@@ -129,6 +129,10 @@ final class ValidationResults
             $out['signatures'][] = $resultSet;
         }
 
-        return json_encode($out, JSON_PRETTY_PRINT);
+        $json = json_encode($out, JSON_PRETTY_PRINT);
+        if ($json === false) {
+            return '';
+        }
+        return $json;
     }
 }
