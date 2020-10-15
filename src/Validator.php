@@ -648,7 +648,13 @@ class Validator
      */
     protected static function hashBody(string $body, string $hashAlgo = self::DEFAULT_HASH_FUNCTION): string
     {
-        return base64_encode(hash($hashAlgo, $body, true));
+        //Can return false if the $hashAlgo hash function doesn't exist
+        if (! in_array($hashAlgo, hash_algos(), true)) {
+            return '';
+        }
+        $hash = hash($hashAlgo, $body, true);
+
+        return base64_encode($hash);
     }
 
     /**
