@@ -55,7 +55,7 @@
   },
   "scripts": {
     "test:unit": "./vendor/bin/pest --coverage --colors=always",
-    "test:types": "./vendor/bin/phpstan analyse --ansi --memory-limit=0",
+    "test:types": "./vendor/bin/phpstan analyse --ansi --no-progress --memory-limit=0",
     "test:psalm": "./vendor/bin/psalm --show-info=true",
     "test": [
       "@test:unit",

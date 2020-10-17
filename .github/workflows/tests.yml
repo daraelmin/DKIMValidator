@@ -44,7 +44,7 @@ jobs:
         run: vendor/bin/pest --colors=always
 
       - name: PHPStan Type Checks
-        run: vendor/bin/phpstan analyse --ansi
+        run: vendor/bin/phpstan analyse --ansi --no-progress --memory-limit=0
 
       - name: Psalm Type Tests
-        run: vendor/bin/psalm --shepherd -c psalm.xml
+        run: vendor/bin/psalm --shepherd --show-info=true -c psalm.xml
