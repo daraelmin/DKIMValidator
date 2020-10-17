@@ -3,7 +3,32 @@ name: Tests
 on: ['push', 'pull_request']
 
 jobs:
-  ci:
+  coding-standards:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        php: [7.4]
+        dependency-version: [prefer-stable]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 7.4
+          extensions: mbstring, hash, openssl
+          tools: composer:v2
+
+      - name: Install PHP 7 dependencies
+        run: composer update --${{ matrix.dependency-version }} --no-interaction --no-progress
+
+      - name: Check coding standards
+        run: vendor/bin/phpcs
+
+  tests:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
