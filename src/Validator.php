@@ -652,7 +652,7 @@ class Validator
         if (! in_array($hashAlgo, hash_algos(), true)) {
             return '';
         }
-        $hash = hash($hashAlgo, $body, true);
+        $hash = (string)hash($hashAlgo, $body, true);
 
         return base64_encode($hash);
     }
