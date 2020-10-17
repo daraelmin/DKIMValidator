@@ -41,16 +41,25 @@ final class ValidationResult
         return $this->valid;
     }
 
+    /**
+     * @return string[]
+     */
     public function getPasses(): array
     {
         return $this->passes;
     }
 
+    /**
+     * @return string[]
+     */
     public function getFails(): array
     {
         return $this->fails;
     }
 
+    /**
+     * @return string[]
+     */
     public function getWarnings(): array
     {
         return $this->warnings;
