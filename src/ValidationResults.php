@@ -130,9 +130,6 @@ final class ValidationResults
         }
 
         $json = json_encode($out, JSON_PRETTY_PRINT);
-        if ($json === false) {
-            return '';
-        }
-        return $json;
+        return (string)$json;
     }
 }
