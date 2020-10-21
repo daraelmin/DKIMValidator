@@ -69,6 +69,7 @@ it(
         $m = new Validator(new Message($rawMessage));
         $results = $m->validate();
         expect($results->getResults()[0]->getFails())->toHaveCount(1);
+        expect(Validator::isValid($rawMessage))->toBeFalse();
     }
 );
 
@@ -346,6 +347,10 @@ it(
         $validator = new Validator(new Message($message));
         $validation = $validator->validate();
         expect($validation->isValid())->toBeFalse();
+        $output = (string)$validation;
+        //For coverage
+        expect($output)->toContain('considered a security weakness');
+        expect($validation->asJSON())->toContain('considered a security weakness');
         throw new ValidatorException();
     }
 )->throws(ValidatorException::class);
@@ -869,6 +874,7 @@ it(
         $validator = new Validator(new Message($message), new TestingResolver());
         $validation = $validator->validate();
         expect($validation->isValid())->toBeFalse();
+        expect(Validator::isValid($message))->toBeFalse();
     }
 );
 
