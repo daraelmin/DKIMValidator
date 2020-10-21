@@ -94,4 +94,4 @@ it(
         );
         $message->getHeadersNamed('A');
     }
-)->throws(HeaderException::class);;
+)->throws(HeaderException::class);
