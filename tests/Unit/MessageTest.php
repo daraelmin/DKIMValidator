@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use PHPMailer\DKIMValidator\HeaderException;
 use PHPMailer\DKIMValidator\Message;
 
 it(
@@ -84,3 +85,13 @@ it(
         expect($result)->toHaveCount(0);
     }
 );
+
+it(
+    'parses invalid headers correctly',
+    function () {
+        $message = new Message(
+            "A: X\r\nB : Y\t\r\n:C\tZ  \r\nB:P\r\n\r\n C \r\nD \t E\r\n\r\n\r\n"
+        );
+        $message->getHeadersNamed('A');
+    }
+)->throws(HeaderException::class);;

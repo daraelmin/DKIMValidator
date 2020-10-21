@@ -125,20 +125,17 @@ final class Message
      * @param string $headerName
      *
      * @return Header[]
+     * @throws HeaderException
      */
     public function getHeadersNamed(string $headerName): array
     {
         $headerName = strtolower($headerName);
         $matchedHeaders = [];
-        try {
-            foreach ($this->getHeaders() as $header) {
-                //Don't exit early as there may be multiple headers with the same name
-                if ($header->getLowerLabel() === $headerName) {
-                    $matchedHeaders[] = $header;
-                }
+        foreach ($this->getHeaders() as $header) {
+            //Don't exit early as there may be multiple headers with the same name
+            if ($header->getLowerLabel() === $headerName) {
+                $matchedHeaders[] = $header;
             }
-        } catch (HeaderException $e) {
-            //Do nothing
         }
         return $matchedHeaders;
     }
