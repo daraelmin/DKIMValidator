@@ -257,14 +257,14 @@ class Validator
                 //though it may be longer, which is a minor security risk,
                 //so it's common not to use the `l` tag
                 if (array_key_exists('l', $dkimTags)) {
+                    $validationResult->addWarning(
+                        'The optional `l` body length tag is considered a security weakness and should be avoided.'
+                    );
                     $bodyLength = strlen($canonicalBody);
                     if ((int)$dkimTags['l'] > $bodyLength) {
                         throw new ValidatorException('Body too short: ' . $dkimTags['l'] . '/' . $bodyLength . '.');
                     }
                     $validationResult->addPass("Optional body length tag is present and valid: ${bodyLength}" . '.');
-                    $validationResult->addWarning(
-                        'The optional `l` body length tag is considered a security weakness and should be avoided.'
-                    );
                 }
 
                 //Ensure the optional user identifier ends in the signing domain
