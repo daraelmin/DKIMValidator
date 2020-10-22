@@ -35,8 +35,10 @@ if (Validator::isValid($message)) {
 //Long way, provides a detailed analysis of what is right and wrong in the DKIM signature
 $validator = new Validator(new Message($message));
 $analysis = $validator->validate();
-$valid = $analysis->isValid();
-var_dump($analysis->getResults());
+//Uses the built-in string conversion to generate a readable report
+echo $analysis;
+//Can also generate JSON output.
+echo $analysis->asJSON();
 ```
 
 DKIM has its flaws, not least that it's quite complex and a little fragile, as discussed in [this article](https://noxxi.de/research/breaking-dkim-on-purpose-and-by-chance.html). Overall, DKIM provides the best way we have of being able to ensure the authenticity and integrity of unencrypted email messages.
