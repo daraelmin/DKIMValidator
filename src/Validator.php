@@ -288,22 +288,36 @@ class Validator
                 $validationResult->addPass('All headers that must be signed are signed.');
 
                 //Check whether the signature signs all headers that should be signed
+                $noShould = true;
                 foreach (self::SHOULD_SIGN_HEADERS as $shouldSignThis) {
                     $headersOfThisType = $this->message->getHeadersNamed($shouldSignThis);
                     if (count($headersOfThisType) > 0 && !in_array($shouldSignThis, $signedHeaderNames, true)) {
                         $validationResult->addWarning(
                             'Header that should be signed is not signed: ' . $shouldSignThis . '.'
                         );
+                        $noShould = false;
                     }
+                }
+                if ($noShould) {
+                    $validationResult->addPass(
+                        'All headers that should be signed are signed.'
+                    );
                 }
 
                 //Check whether the signature signs headers that should not be signed
+                $noShouldNot = true;
                 foreach (self::SHOULD_NOT_SIGN_HEADERS as $shouldNotSignThis) {
                     if (in_array($shouldNotSignThis, $signedHeaderNames, true)) {
                         $validationResult->addWarning(
                             'Header that should not be signed is signed: ' . $shouldNotSignThis . '.'
                         );
+                        $noShouldNot = false;
                     }
+                }
+                if ($noShouldNot) {
+                    $validationResult->addPass(
+                        'No headers that that should not be signed are signed.'
+                    );
                 }
 
                 //Validate and check expiry time
