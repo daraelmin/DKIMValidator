@@ -19,38 +19,42 @@ final class Message
     public const LF = "\n";
 
     /**
-     * Carriage return character
+     * Carriage return character (Classic MacOS line break)
      */
     public const CR = "\r";
 
     /**
      * Default whitespace string
      */
-    public const SPACE = ' ';
+    public const WSP = ' ';
+
     /**
      * The original, unaltered message
      *
      * @var string
      */
-    protected $raw = '';
+    private string $raw;
+
     /**
      * Message headers, as a string with CRLF line breaks
      *
      * @var string
      */
-    protected $headers = '';
+    private string $headers;
+
     /**
-     * Message headers, parsed into an array
+     * Message headers, parsed into an array or Header objects
      *
      * @var Header[]
      */
-    protected $parsedHeaders = [];
+    private array $parsedHeaders = [];
+
     /**
      * Message body, as a string with CRLF line breaks
      *
      * @var string
      */
-    protected $body = '';
+    private $body;
 
     /**
      * Constructor
@@ -137,24 +141,6 @@ final class Message
                 $matchedHeaders[] = $header;
             }
         }
-        return $matchedHeaders;
-    }
-
-    /**
-     * Get all DKIM signature headers.
-     *
-     * @return Header[]
-     * @throws HeaderException
-     */
-    public function getDKIMHeaders(): array
-    {
-        $matchedHeaders = [];
-        foreach ($this->getHeaders() as $header) {
-            if ($header->isDKIMSignature()) {
-                $matchedHeaders[] = $header;
-            }
-        }
-
         return $matchedHeaders;
     }
 

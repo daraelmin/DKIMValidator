@@ -4,30 +4,41 @@ declare(strict_types=1);
 
 namespace PHPMailer\DKIMValidator;
 
-class Header
+/**
+ * A single email message header.
+ * @package PHPMailer\DKIMValidator
+ */
+final class Header
 {
     /**
      * RFC822 line break sequence
      */
-    private const CRLF = "\r\n";
+    public const CRLF = "\r\n";
 
     /**
-     * String used as folding white space
+     * String used when folding white space
      */
-    private const FWS = ' ';
+    public const FWS = ' ';
+
+    /**
+     * String used when unfolding headers
+     */
+    public const WSP = ' ';
 
     /**
      * @var string Raw original text of a header, including label, line breaks and FWS
      */
-    private $raw;
+    private string $raw;
+
     /**
      * @var string The header label
      */
-    private $label;
+    private string $label;
+
     /**
      * @var string The raw
      */
-    private $value;
+    private string $value;
 
     /**
      * Header constructor.
@@ -39,7 +50,7 @@ class Header
     public function __construct(string $header)
     {
         if (empty($header)) {
-            throw new \InvalidArgumentException();
+            throw new \InvalidArgumentException('Header is empty');
         }
         $this->raw = $header;
         //Though the trailing break belongs to the header, we don't want to process it as a line in its own right
@@ -117,47 +128,6 @@ class Header
     }
 
     /**
-     * Return a whole header canonicalized according to the `relaxed` scheme.
-     *
-     * @see https://tools.ietf.org/html/rfc6376#section-3.4.2
-     *
-     * @param bool $stripBvalue Whether to strip the b tag value from this header if it's a DKIM signature
-     *
-     * @return string
-     */
-    public function getRelaxedCanonicalizedHeader(bool $stripBvalue = false): string
-    {
-        //Lowercase and trim header label
-        $label = trim($this->getLowerLabel());
-
-        //Unfold, collapse whitespace to a single space, and trim
-        $val = trim((string) preg_replace('/\s+/', self::FWS, $this->getValue()), " \r\n\t");
-
-        //Stick it back together including a trailing break, note no space before or after the `:`
-        $completeHeader = "${label}:${val}" . self::CRLF;
-
-        //If this is a DKIM signature and we are canonicalizing for it, we need to remove the `b` tag value
-        //The `b` tag will usually be the last tag in the signature, so it may be terminated by
-        //a ; or a line break (which we just added above)
-        if ($stripBvalue && $this->isDKIMSignature()) {
-            $completeHeader = preg_replace('/ b=([^;\r\n]*)/', ' b=', $completeHeader);
-        }
-        return $completeHeader;
-    }
-
-    /**
-     * Is this header a DKIM signature?
-     *
-     * @return bool
-     */
-    public function isDKIMSignature(): bool
-    {
-        //If you want to support other DKIM implementations, override this method and add them like this
-        // return in_array($this->getLowerLabel(), ['dkim-signature', 'x-google-dkim-signature'])
-        return $this->getLowerLabel() === 'dkim-signature';
-    }
-
-    /**
      * Get the value of a header, fully decoded and unfolded.
      *
      * @return string
@@ -178,27 +148,6 @@ class Header
     {
         //Unfold header value
         return preg_replace('/[ \t]+/', '', $this->getValue());
-    }
-
-    /**
-     * Return a whole header canonicalized according to the `simple` scheme.
-     * This involves doing nothing at all!
-     *
-     * @see https://tools.ietf.org/html/rfc6376#section-3.4.1
-     *
-     * @param bool $stripBvalue Whether to strip the b tag value from this header if it's a DKIM signature
-     *
-     * @return string
-     */
-    public function getSimpleCanonicalizedHeader(bool $stripBvalue = false): string
-    {
-        $completeHeader = $this->getRaw();
-
-        //If this is a DKIM signature and we are canonicalizing for it, we need to remove the `b` tag value
-        if ($stripBvalue && $this->isDKIMSignature()) {
-            $completeHeader = preg_replace('/ b=([^;]*)/s', ' b=', $completeHeader);
-        }
-        return $completeHeader;
     }
 
     /**

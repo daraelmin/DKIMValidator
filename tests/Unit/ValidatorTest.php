@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PHPMailer\DKIMValidator\DKIMException;
+use PHPMailer\DKIMValidator\DKIMHeader;
 use PHPMailer\DKIMValidator\DNSException;
 use PHPMailer\DKIMValidator\Header;
 use PHPMailer\DKIMValidator\Message;
@@ -90,7 +91,7 @@ it(
             " IWnRd043/Onv9ACRzau3F80gszR/86grpUwmZ88wHTL8R6g/pqz2eExQNNRmkFaVkwFG0vT5o\r\n" .
             " Rh7Z0ZEl+n4fqoyrTctR8ZEimwwd+xFOtx1hB9KgjW+JVcdTVQ=="
         );
-        $tags = Validator::extractDKIMTags($header);
+        $tags = Validator::extractDKIMTags(new DKIMHeader($header));
         expect($tags)->toHaveCount(13);
         expect($tags['a'])->toEqual('rsa-sha256');
         expect($tags['b'])->toEqual(
@@ -951,7 +952,7 @@ it(
 it(
     'skips unnamed DKIM tags',
     function () {
-        $tags = Validator::extractDKIMTags(new Header('DKIM-Signature: s=phpmailer; =true'));
+        $tags = Validator::extractDKIMTags(new DKIMHeader(new Header('DKIM-Signature: s=phpmailer; =true')));
         expect($tags)->toEqual(['s' => 'phpmailer']);
     }
 );
@@ -959,8 +960,55 @@ it(
 it(
     'skips trailing semi-colon in DKIM tags',
     function () {
-        $tags = Validator::extractDKIMTags(new Header('DKIM-Signature: s=phpmailer; x=true;'));
-        expect($tags)->toEqual(['s' => 'phpmailer', 'x' => 'true']);
+        $tags = Validator::extractDKIMTags(new DKIMHeader(new Header('DKIM-Signature: s=phpmailer; x=true;')));
+        expect($tags)->toEqual(['s' => 'phailer', 'x' => 'true']);
+    }
+);
+
+/**
+ * @see https://github.com/PHPMailer/PHPMailer/issues/1965
+ */
+it(
+    'extracts signed headers in the correct order, permitting duplicates',
+    function () {
+        $messageText = "DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=example.net; q=dns/txt;\r\n" .
+            " s=smtp; t=1602669123; h=Message-ID: Content-Type: MIME-Version: To:" .
+            " Subject: Subject: Date: From: Sender;\r\n" .
+            " bh=qZQWTbOhUwtjFbiSuywcDjgZkYuAeZ+65mtqLMgU/lc=;" .
+            " b=p4WDZf90n0KWIaYO9482lAHT2pspp48i+r17NuAppeWbaBrJ3+3b3QzPJHz6TUOVJ97woW9g\r\n" .
+            " njh6djfXaHy1OluKfpUjRCEzux36Vt2oF+Ta3soT09m4V6M/VnMhzG/naVg/eJruH89hvplH\r\n" .
+            " RlutQbvXmec+U3dkrrqM5f0e8W4=\r\n" .
+            "X-Mailgun-Sending-Ip: 141.193.32.19\r\n" .
+            "X-Mailgun-Sid: WyJhN2FlZSIsICJhbmRyaXNAZWtpcmkuZWUiLCAiMTgxZCJd\r\n" .
+            "Received: from [127.0.0.1] (134-247-159-217.sta.estpak.ee [217.159.247.134])\r\n" .
+            " by smtp-out-n01.prod.eu-central-1.postgun.com with SMTP id\r\n" .
+            " 5f86ca43c20cc98d9eabfed2 (version=TLS1.3, cipher=TLS_AES_128_GCM_SHA256);\r\n" .
+            " Wed, 14 Oct 2020 09:52:03 GMT\r\n" .
+            "Sender: info=srv.dev@out.srv.dev\r\n" .
+            "From: <info@srv.dev>\r\n" .
+            "Date: Thu, 14 Oct 2020 03:40:36 EDT\r\n" .
+            "Subject: FW: Earn money\r\n" .
+            "Subject: FW2: Earn money\r\n" .
+            "To: <andris@kreata.ee>\r\n" .
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: text/plain\r\n" .
+            "Message-ID: <test1@srv.dev>\r\n\r\n" .
+            "test";
+
+        $signedHeaders = "message-id:<test1@srv.dev>\r\n" .
+            "content-type:text/plain\r\n" .
+            "mime-version:1.0\r\n" .
+            "to:<andris@kreata.ee>\r\n" .
+            "subject:FW2: Earn money\r\n" .
+            "subject:FW: Earn money\r\n" .
+            "date:Thu, 14 Oct 2020 03:40:36 EDT\r\n" .
+            "from:<info@srv.dev>\r\n" .
+            "sender:info=srv.dev@out.srv.dev\r\n" .
+            "dkim-signature:a=rsa-sha256; v=1; c=relaxed/relaxed; d=out.srv.dev; q=dns/txt; s=smtp; t=1602669123; h=Message-ID: Content-Type: MIME-Version: To: Subject: Subject: Date: From: Sender; bh=qZQWTbOhUwtjFbiSuywcDjgZkYuAeZ+65mtqLMgU/lc=; b=";
+        $message = new Message($messageText);
+        $headers = $message->getHeaders();
+        $validator = new Validator($message, new TestingResolver());
+        Validator::extractSignedHeaders($headers);
     }
 );
 

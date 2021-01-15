@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PHPMailer\DKIMValidator;
 
+use PHPMailer\DKIMValidator\DKIMHeader;
+
 class Validator
 {
     /**
@@ -24,7 +26,7 @@ class Validator
     /**
      * Default whitespace string
      */
-    public const SPACE = ' ';
+    public const WSP = ' ';
 
     /**
      * A regex pattern to validate DKIM selectors
@@ -112,9 +114,9 @@ class Validator
     ];
 
     /**
-     * @var Message
+     * @var DKIMMessage
      */
-    protected $message;
+    protected DKIMMessage $message;
 
     /**
      * An instance used for resolving DNS records.
@@ -126,7 +128,7 @@ class Validator
     /**
      * @var array
      */
-    private $publicKeys = [];
+    private array $publicKeys = [];
 
     /**
      * Constructor
@@ -136,7 +138,7 @@ class Validator
      */
     public function __construct(Message $message, ResolverInterface $resolver = null)
     {
-        $this->message = $message;
+        $this->message = new DKIMMessage($message);
         //Injecting a DNS resolver allows this to be pluggable, which also helps with testing
         if ($resolver === null) {
             $this->resolver = new Resolver();
@@ -179,12 +181,13 @@ class Validator
         $validationResults = new ValidationResults();
 
         //Find all DKIM signatures amongst the headers (there may be more than one)
-        $signatures = $this->message->getDKIMHeaders();
+        $signatures = $this->message->getDKIMSignatures();
 
         if (empty($signatures)) {
             $validationResult = new ValidationResult();
             $validationResult->addFail('Message does not contain a DKIM signature.');
             $validationResults->addResult($validationResult);
+
             return $validationResults;
         }
         //Validate each signature in turn
@@ -279,7 +282,7 @@ class Validator
 
                 //Check that the signature signs headers that must be signed
                 foreach (self::MUST_SIGN_HEADERS as $mustSignThis) {
-                    if (!in_array($mustSignThis, $signedHeaderNames, true)) {
+                    if (! in_array($mustSignThis, $signedHeaderNames, true)) {
                         throw new ValidatorException(
                             'Header that must be signed is not signed: ' . $mustSignThis . '.'
                         );
@@ -290,8 +293,8 @@ class Validator
                 //Check whether the signature signs all headers that should be signed
                 $noShould = true;
                 foreach (self::SHOULD_SIGN_HEADERS as $shouldSignThis) {
-                    $headersOfThisType = $this->message->getHeadersNamed($shouldSignThis);
-                    if (count($headersOfThisType) > 0 && !in_array($shouldSignThis, $signedHeaderNames, true)) {
+                    $headersOfThisType = $this->message->getMessage()->getHeadersNamed($shouldSignThis);
+                    if (count($headersOfThisType) > 0 && ! in_array($shouldSignThis, $signedHeaderNames, true)) {
                         $validationResult->addWarning(
                             'Header that should be signed is not signed: ' . $shouldSignThis . '.'
                         );
@@ -360,16 +363,16 @@ class Validator
                 foreach ($signedHeaderNames as $headerName) {
                     //TODO Deal with duplicate signed header values
                     //and extra blank headers used to force invalidation
-                    $matchedHeaders = $this->message->getHeadersNamed($headerName);
+                    $matchedHeaders = $this->message->getMessage()->getHeadersNamed($headerName);
                     foreach ($matchedHeaders as $header) {
-                        $headersToCanonicalize[] = $header;
+                        $headersToCanonicalize[] = new DKIMHeader($header);
                     }
                 }
-                //A DKIM signature needs to be included in the verification, but it won't appear in the `h` tag.
-                //Also need to remove the `b` tag's value from the signature header before calculating the hash
-                $headersToCanonicalize[] = new Header(
-                    'DKIM-Signature: ' .
-                    preg_replace('/b=(.*?)(;|$)/s', 'b=$2', $signature->getValue())
+                //Though it's not listed in the `h` tag, the DKIM signature needs to be included in the verification
+                $headersToCanonicalize[] = new DKIMHeader(
+                    new Header(
+                        'DKIM-Signature: ' . $signature->getHeader()->getValue()
+                    )
                 );
 
                 //Extract the encryption algorithm and hash function and validate according to the
@@ -493,13 +496,13 @@ class Validator
         int $length = 0
     ): string {
         //Convert CRLF to LF breaks for convenience
-        $canonicalBody = str_replace(self::CRLF, self::LF, $this->message->getBody());
+        $canonicalBody = str_replace(self::CRLF, self::LF, $this->message->getMessage()->getBody());
         if ($algorithm === self::CANONICALIZATION_BODY_RELAXED) {
             //http://tools.ietf.org/html/rfc6376#section-3.4.4
             //Remove trailing space
             $canonicalBody = preg_replace('/[ \t]+$/m', '', $canonicalBody);
             //Replace runs of whitespace with a single space
-            $canonicalBody = preg_replace('/[ \t]+/m', self::SPACE, (string)$canonicalBody);
+            $canonicalBody = preg_replace('/[ \t]+/m', self::WSP, (string)$canonicalBody);
         }
         //Always perform rules for "simple" canonicalization as well
         //http://tools.ietf.org/html/rfc6376#section-3.4.3
@@ -510,7 +513,7 @@ class Validator
 
         //If the body is non-empty but does not end with a CRLF, add a CRLF
         //https://tools.ietf.org/html/rfc6376#section-3.4.4 (b)
-        if (!empty($canonicalBody) && substr($canonicalBody, -2) !== self::CRLF) {
+        if (! empty($canonicalBody) && substr($canonicalBody, -2) !== self::CRLF) {
             $canonicalBody .= self::CRLF;
         }
 
@@ -613,7 +616,7 @@ class Validator
      *
      * @see https://tools.ietf.org/html/rfc6376#section-3.4
      *
-     * @param Header[] $headers
+     * @param array<int,Header> $headers
      * @param string $algorithm 'relaxed' or 'simple'
      *
      * @param int $forSignature the index of the DKIM signature to canonicalize for
@@ -632,20 +635,12 @@ class Validator
         }
 
         $canonical = '';
-        $sigIndex = 0;
         foreach ($headers as $header) {
-            $stripBvalue = false;
-            if ($header->isDKIMSignature()) {
-                if ($forSignature === $sigIndex) {
-                    //This is the signature we are canonicalizing for, so we need to remove its b tag value
-                    $stripBvalue = true;
-                }
-                ++$sigIndex;
-            }
+            $dkimheader = new DKIMHeader($header);
             if ($algorithm === self::CANONICALIZATION_HEADERS_SIMPLE) {
-                $canonical .= $header->getSimpleCanonicalizedHeader($stripBvalue);
+                $canonical .= DKIMHeader::removeBValue($dkimheader->getSimpleCanonicalizedHeader());
             } elseif ($algorithm === self::CANONICALIZATION_HEADERS_RELAXED) {
-                $canonical .= $header->getRelaxedCanonicalizedHeader($stripBvalue);
+                $canonical .= DKIMHeader::removeBValue($dkimheader->getRelaxedCanonicalizedHeader());
             }
         }
 
@@ -727,18 +722,18 @@ class Validator
     /**
      * Extract DKIM parameters from a DKIM signature header value.
      *
-     * @param Header $header
+     * @param DKIMHeader $header
      *
      * @return string[]
      */
-    public static function extractDKIMTags(Header $header): array
+    public static function extractDKIMTags(DKIMHeader $header): array
     {
-        if (!$header->isDKIMSignature()) {
+        if (! $header->isDKIMSignature()) {
             throw new \InvalidArgumentException('Attempted to extract DKIM tags from a non-DKIM header');
         }
         $dkimTags = [];
         //DKIM-Signature headers ignore all internal spaces, which may have been added by unfolding
-        $tagParts = explode(';', $header->getValueWithoutSpaces());
+        $tagParts = explode(';', $header->getHeader()->getValueWithoutSpaces());
         foreach ($tagParts as $tagIndex => $tagContent) {
             if (trim($tagContent) === '') {
                 //Ignore any extra or trailing ; separators resulting in empty tags
@@ -755,10 +750,38 @@ class Validator
     }
 
     /**
+     * Filter the full list of headers against the list of headers signed by a DKIM signature.
+     * Needs to be done backwards to ensure duplicate headers occur in the correct order.
+     *
+     * @param array<int,Header> $headers
+     * @param array<int,string> $signedHeaderList
+     *
+     * @return array<int,Header>
+     */
+    public static function extractSignedHeaders(array $headers, array $signedHeaderList): array
+    {
+        $signedHeaders = [];
+        $headers = array_reverse($headers);
+        foreach ($signedHeaderList as $signedHeaderName) {
+            foreach ($headers as $headerIndex => $header) {
+                if ($header->getLowerLabel() === strtolower($signedHeaderName)) {
+                    //We want this header, so add it to the output
+                    $signedHeaders[] = $header;
+                    //Remove this header from the source list
+                    unset($headers[$headerIndex]);
+                    //Skip the rest of this loop and start searching for the next signed header
+                    break;
+                }
+            }
+        }
+        return $signedHeaders;
+    }
+
+    /**
      * @return Message
      */
     public function getMessage(): Message
     {
-        return $this->message;
+        return $this->message->getMessage();
     }
 }
