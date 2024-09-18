@@ -141,7 +141,7 @@ class Validator extends DKIM
                         'reason' => 'Signature has expired.',
                     ];
                 }
-                if ((int) $dkimTags['x'] < (int) $dkimTags['t']) {
+                if (isset($dkimTags['t']) && ((int) $dkimTags['x'] < (int) $dkimTags['t']) ) {
                     $output[$signatureIndex][] = [
                         'status' => 'PERMFAIL',
                         'reason' => 'Expiry time is before signature time.',
